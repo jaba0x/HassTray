@@ -15,10 +15,14 @@
 </p>
 
 <p align="center">
+  <img src="docs/demo.gif" alt="The tray opening, tiles toggling, a sensor graph and the themes" width="420">
+</p>
+
+<p align="center">
   <img src="docs/screens.png" alt="The tray, a graph and the entity settings" width="900">
 </p>
 
-The screenshots use sample data.
+The demo and the screenshots use sample data.
 
 ## What it does
 
