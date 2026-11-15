@@ -1,6 +1,8 @@
 package config
 
 import (
+	"os"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -92,5 +94,44 @@ func TestUnknownThemeFallsBack(t *testing.T) {
 	}
 	if again.Get().Theme != "glass" {
 		t.Fatalf("theme = %q, want glass", again.Get().Theme)
+	}
+}
+
+func TestCustomCheck(t *testing.T) {
+	ok := DefaultCustom()
+	if err := ok.Check(); err != nil {
+		t.Fatalf("the defaults should pass: %v", err)
+	}
+	bad := []CustomTheme{
+		{Base: "plaid", Accent: "#0A84FF", Corner: 16, Font: "system"},
+		{Base: "glass", Accent: "blue", Corner: 16, Font: "system"},
+		{Base: "glass", Accent: "#0A84FF", Surface: "#fff", Corner: 16, Font: "system"},
+		{Base: "glass", Accent: "#0A84FF", Corner: 40, Font: "system"},
+		{Base: "glass", Accent: "#0A84FF", Corner: 16, Font: "comic"},
+		{Base: "custom", Accent: "#0A84FF", Corner: 16, Font: "system"},
+	}
+	for _, c := range bad {
+		if err := c.Check(); err == nil {
+			t.Errorf("%+v should be refused", c)
+		}
+	}
+}
+
+func TestBrokenCustomFallsBack(t *testing.T) {
+	dir := t.TempDir()
+	raw := `{"url":"http://ha.local:8123","theme":"custom","custom":{"base":"glass","accent":"nonsense","corner":99,"font":"comic"}}`
+	if err := os.WriteFile(filepath.Join(dir, "config.json"), []byte(raw), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := s.Get()
+	if got.Theme != "glass" || got.Custom != DefaultCustom() {
+		t.Fatalf("broken custom theme not reset: %+v", got)
+	}
+	if got.URL != "http://ha.local:8123" {
+		t.Fatalf("the rest of the config should survive: %+v", got)
 	}
 }

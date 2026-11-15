@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+
+	"github.com/jaba0x/hasstray/internal/config"
 	"strconv"
 )
 
@@ -22,6 +24,8 @@ type request struct {
 	Token  string `json:"token"`
 	Theme  string `json:"theme"`
 	Target string `json:"target"`
+
+	Custom *config.CustomTheme `json:"custom"`
 }
 
 // shell is what the API needs from the window and the app around it.
@@ -66,6 +70,12 @@ func newAPI(a *App, sh shell, pages http.Handler) http.Handler {
 	post("/api/widget", func(q request) (any, error) { return ok(a.SetWidget(q.ID, q.On)) })
 	post("/api/move", func(q request) (any, error) { return ok(a.Move(q.ID, q.Delta)) })
 	post("/api/theme", func(q request) (any, error) { return ok(a.SetTheme(q.Theme)) })
+	post("/api/custom", func(q request) (any, error) {
+		if q.Custom == nil {
+			return nil, errors.New("no theme in the request")
+		}
+		return ok(a.SetCustom(*q.Custom))
+	})
 	post("/api/act", func(q request) (any, error) { return ok(a.Act(q.ID)) })
 	post("/api/open", func(q request) (any, error) { return ok(openTarget(a, q.Target)) })
 	post("/api/hide", func(request) (any, error) { sh.hide(); return ok(nil) })

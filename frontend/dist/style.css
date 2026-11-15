@@ -299,3 +299,112 @@ button.row:hover { background: var(--card-hover); }
 .logo .pulse { fill: none; stroke: var(--accent); stroke-width: 4.5; stroke-linecap: round; stroke-linejoin: round; }
 .logo.mark { width: 76px; height: 76px; border-radius: 19px; }
 #app[data-theme="glass"] .logo .pulse { stroke: #0a6cff; }
+
+/* Paper: flat, light and warm, with squarer corners. */
+#app[data-theme="paper"] {
+  --page: #F3F1EA;
+  --text: #221F1B;
+  --muted: #655E55;
+  --card: #FFFFFF;
+  --card-hover: #FAF8F3;
+  --card-border: rgba(34, 31, 27, 0.11);
+  --field: #FFFFFF;
+  --accent: #A8431A;
+  --accent-fill: #A8431A;
+  --on-accent: #FFFFFF;
+  --on-accent-muted: #F6DDD2;
+  --accent-soft: rgba(168, 67, 26, 0.12);
+  --line: #A8431A;
+  --line-2: #3F6B5A;
+  --ok: #2F6B45;
+  --danger: #A32018;
+  --radius: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 1px 2px rgba(34, 31, 27, 0.08);
+}
+
+/* Slate: cool dark blue-grey with a periwinkle accent. */
+#app[data-theme="slate"] {
+  --page: radial-gradient(420px 320px at 88% -8%, rgba(97, 139, 232, 0.22), transparent 70%), #151A23;
+  --text: #E7ECF5;
+  --muted: #9FADC4;
+  --card: rgba(255, 255, 255, 0.055);
+  --card-hover: rgba(255, 255, 255, 0.11);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --field: rgba(255, 255, 255, 0.08);
+  --accent: #8FB4FF;
+  --accent-fill: #3D6FE0;
+  --on-accent: #FFFFFF;
+  --on-accent-muted: #D7E2FF;
+  --accent-soft: rgba(97, 139, 232, 0.2);
+  --line: #8FB4FF;
+  --line-2: #7FD6C0;
+  --ok: #6FD39B;
+  --danger: #FF8F87;
+  --radius: 14px;
+  --radius-sm: 9px;
+  --shadow: none;
+}
+
+/* Forest: deep green with amber. */
+#app[data-theme="forest"] {
+  --page: radial-gradient(440px 340px at 6% 100%, rgba(227, 179, 65, 0.14), transparent 70%), #0E1711;
+  --text: #ECF2EA;
+  --muted: #A3B3A2;
+  --card: rgba(255, 255, 255, 0.055);
+  --card-hover: rgba(255, 255, 255, 0.11);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --field: rgba(255, 255, 255, 0.08);
+  --accent: #E3B341;
+  --accent-fill: #E3B341;
+  --on-accent: #15200F;
+  --on-accent-muted: #4A3A10;
+  --accent-soft: rgba(227, 179, 65, 0.16);
+  --line: #E3B341;
+  --line-2: #7FC08A;
+  --ok: #7FC08A;
+  --danger: #FF9A90;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: none;
+}
+
+/* Rose: pale and warm, round, with a deep rose accent. */
+#app[data-theme="rose"] {
+  --page: radial-gradient(420px 320px at 100% 0%, rgba(224, 85, 127, 0.18), transparent 70%), #FBF1F4;
+  --text: #2A1A22;
+  --muted: #6E5560;
+  --card: rgba(255, 255, 255, 0.72);
+  --card-hover: #FFFFFF;
+  --card-border: rgba(42, 26, 34, 0.09);
+  --field: #FFFFFF;
+  --accent: #B01E5C;
+  --accent-fill: linear-gradient(140deg, #E0557F, #B01E5C);
+  --on-accent: #FFFFFF;
+  --on-accent-muted: #FBDCE6;
+  --accent-soft: rgba(176, 30, 92, 0.12);
+  --line: #B01E5C;
+  --line-2: #7A5AA8;
+  --ok: #2F6B45;
+  --danger: #A32018;
+  --radius: 20px;
+  --radius-sm: 13px;
+  --shadow: 0 1px 2px rgba(42, 26, 34, 0.07);
+  --font: ui-rounded, "SF Pro Rounded", -apple-system, sans-serif;
+}
+
+/* the theme editor */
+.mixer { display: flex; flex-direction: column; gap: 14px; padding: 14px; border-radius: var(--radius); background: var(--card); border: 1px solid var(--card-border); }
+.mixrow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mixrow > span { font-size: 12px; font-weight: 600; flex: none; }
+.colorpick { display: flex; align-items: center; gap: 8px; }
+.colorpick input[type="color"] { width: 34px; height: 30px; padding: 0; border: 1px solid var(--card-border); border-radius: 8px; background: none; cursor: pointer; }
+.colorpick input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+.colorpick input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 6px; }
+.colorpick input[type="text"] { width: 92px; height: 30px; padding: 0 8px; border-radius: 8px; border: 1px solid var(--card-border); background: var(--field); outline: 0; font: 12px ui-monospace, "SF Mono", Menlo, monospace; -webkit-user-select: text; user-select: text; }
+.dots { display: flex; gap: 7px; flex-wrap: wrap; }
+.dots button { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.35); }
+.dots button[aria-pressed="true"] { border-color: var(--text); }
+.chiprow { flex: 1; min-width: 0; display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.mixrow .chip { height: 26px; padding: 0 9px; }
+input[type="range"] { flex: 1; min-width: 0; accent-color: var(--accent); }

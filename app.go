@@ -255,21 +255,24 @@ type EntityView struct {
 
 // Snapshot is everything the popover needs for one redraw.
 type Snapshot struct {
-	Rev        int64        `json:"rev"`
-	Version    string       `json:"version"`
-	Configured bool         `json:"configured"`
-	Connected  bool         `json:"connected"`
-	Error      string       `json:"error"`
-	URL        string       `json:"url"`
-	Name       string       `json:"name"`
-	HAVersion  string       `json:"haVersion"`
-	Theme      string       `json:"theme"`
-	Themes     []string     `json:"themes"`
-	Total      int          `json:"total"`
-	Widgets    int          `json:"widgets"`
-	MaxWidgets int          `json:"maxWidgets"`
-	Entities   []EntityView `json:"entities"`
-	Update     UpdateInfo   `json:"update"`
+	Rev        int64              `json:"rev"`
+	Version    string             `json:"version"`
+	Configured bool               `json:"configured"`
+	Connected  bool               `json:"connected"`
+	Error      string             `json:"error"`
+	URL        string             `json:"url"`
+	Name       string             `json:"name"`
+	HAVersion  string             `json:"haVersion"`
+	Theme      string             `json:"theme"`
+	Themes     []string           `json:"themes"`
+	Presets    []string           `json:"presets"`
+	Fonts      []string           `json:"fonts"`
+	Custom     config.CustomTheme `json:"custom"`
+	Total      int                `json:"total"`
+	Widgets    int                `json:"widgets"`
+	MaxWidgets int                `json:"maxWidgets"`
+	Entities   []EntityView       `json:"entities"`
+	Update     UpdateInfo         `json:"update"`
 }
 
 func (a *App) view(s hass.State, cfg config.Config) EntityView {
@@ -308,6 +311,9 @@ func (a *App) Snapshot() Snapshot {
 		HAVersion:  a.info.Version,
 		Theme:      cfg.Theme,
 		Themes:     config.Themes,
+		Presets:    config.Presets,
+		Fonts:      config.Fonts,
+		Custom:     cfg.Custom,
 		Total:      len(a.states),
 		Widgets:    len(cfg.Widgets),
 		MaxWidgets: config.MaxWidgets,
@@ -501,6 +507,19 @@ func (a *App) SetWidget(id string, on bool) error {
 // Move shifts an entity up or down in the tray.
 func (a *App) Move(id string, delta int) error {
 	err := a.store.Update(func(c *config.Config) { c.Move(id, delta) })
+	a.changed()
+	return err
+}
+
+// SetCustom saves a theme the user mixed themselves and switches to it.
+func (a *App) SetCustom(c config.CustomTheme) error {
+	if err := c.Check(); err != nil {
+		return err
+	}
+	err := a.store.Update(func(cfg *config.Config) {
+		cfg.Custom = c
+		cfg.Theme = "custom"
+	})
 	a.changed()
 	return err
 }

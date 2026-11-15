@@ -10,8 +10,22 @@
     { id: 'glass', name: 'Liquid Glass', note: 'Follows light and dark mode', bg: 'linear-gradient(150deg,#cfe6ff,#eef2f9 55%,#dcd9ff)', card: 'rgba(255,255,255,.8)', accent: 'linear-gradient(160deg,#2b95ff,#0068d6 60%,#4f4ddb)' },
     { id: 'midnight', name: 'Midnight Mint', note: 'Dark ink, mint accent', bg: '#0a0e17', card: 'rgba(255,255,255,.1)', accent: '#4fe3c1' },
     { id: 'neon', name: 'Neon Terminal', note: 'Black, lime, monospace', bg: '#000', card: '#1a1f10', accent: '#c6ff3d' },
-    { id: 'sunset', name: 'Sunset', note: 'Plum with warm colours', bg: 'linear-gradient(140deg,#5a1d3c,#1a1024 55%,#3b2470)', card: 'rgba(255,255,255,.14)', accent: 'linear-gradient(140deg,#ffc465,#ff8a6b)' }
+    { id: 'sunset', name: 'Sunset', note: 'Plum with warm colours', bg: 'linear-gradient(140deg,#5a1d3c,#1a1024 55%,#3b2470)', card: 'rgba(255,255,255,.14)', accent: 'linear-gradient(140deg,#ffc465,#ff8a6b)' },
+    { id: 'paper', name: 'Paper', note: 'Flat, light and warm', bg: '#f3f1ea', card: '#fff', accent: '#a8431a' },
+    { id: 'slate', name: 'Slate', note: 'Cool grey, periwinkle', bg: '#151a23', card: 'rgba(255,255,255,.1)', accent: '#3d6fe0' },
+    { id: 'forest', name: 'Forest', note: 'Deep green and amber', bg: '#0e1711', card: 'rgba(255,255,255,.1)', accent: '#e3b341' },
+    { id: 'rose', name: 'Rose', note: 'Pale, warm and round', bg: '#fbf1f4', card: '#fff', accent: 'linear-gradient(140deg,#e0557f,#b01e5c)' }
   ];
+
+  var FONTS = {
+    system: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif',
+    rounded: 'ui-rounded, "SF Pro Rounded", -apple-system, sans-serif',
+    mono: 'ui-monospace, "SF Mono", Menlo, monospace',
+    serif: 'ui-serif, "New York", Georgia, serif'
+  };
+  var FONT_NAMES = { system: 'System', rounded: 'Rounded', mono: 'Mono', serif: 'Serif' };
+  var DARK_BASES = { midnight: 1, neon: 1, sunset: 1, slate: 1, forest: 1 };
+  var ACCENTS = ['#0A84FF', '#4FE3C1', '#C6FF3D', '#FF8A3D', '#B01E5C', '#8B5CF6', '#E3B341', '#2F6B45'];
 
   var ICONS = {
     light: 'M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3z',
@@ -49,9 +63,91 @@
     detail: { id: '', hours: 24, data: null, error: '' },
     picker: { all: [], q: '', domain: 'all' },
     form: { url: '', token: '', busy: false, error: '' },
+    custom: null,
+    editing: 0,
     busy: {},
     flash: ''
   };
+
+  // ---------- colours ----------
+
+  function rgb(h) { return [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)]; }
+  function hex(c) { return '#' + c.map(function (v) { return ('0' + Math.max(0, Math.min(255, Math.round(v))).toString(16)).slice(-2); }).join(''); }
+  function lum(h) {
+    var p = rgb(h).map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+    return 0.2126 * p[0] + 0.7152 * p[1] + 0.0722 * p[2];
+  }
+  function mix(a, b, t) {
+    var x = rgb(a), y = rgb(b);
+    return hex([0, 1, 2].map(function (i) { return x[i] + (y[i] - x[i]) * t; }));
+  }
+  function alpha(h, a) { var c = rgb(h); return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
+  function spin(h, deg) {
+    var c = rgb(h).map(function (v) { return v / 255; });
+    var max = Math.max.apply(null, c), min = Math.min.apply(null, c), d = max - min;
+    var hue = 0;
+    if (d) {
+      if (max === c[0]) hue = ((c[1] - c[2]) / d + (c[1] < c[2] ? 6 : 0));
+      else if (max === c[1]) hue = (c[2] - c[0]) / d + 2;
+      else hue = (c[0] - c[1]) / d + 4;
+      hue *= 60;
+    }
+    var l = (max + min) / 2, sat = d ? d / (1 - Math.abs(2 * l - 1)) : 0;
+    hue = (hue + deg + 360) % 360;
+    // back to rgb
+    var ch = (1 - Math.abs(2 * l - 1)) * sat, x = ch * (1 - Math.abs((hue / 60) % 2 - 1)), m = l - ch / 2;
+    var t = hue < 60 ? [ch, x, 0] : hue < 120 ? [x, ch, 0] : hue < 180 ? [0, ch, x]
+      : hue < 240 ? [0, x, ch] : hue < 300 ? [x, 0, ch] : [ch, 0, x];
+    return hex(t.map(function (v) { return (v + m) * 255; }));
+  }
+
+  // customVars turns the user's choices into the variables the stylesheet reads.
+  function customVars(c) {
+    var dark = !!DARK_BASES[c.base];
+    if (c.base === 'glass') dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (c.surface) dark = lum(c.surface) < 0.45;
+    var v = {};
+    if (c.surface) {
+      var ink = dark ? '#F4F6FA' : '#1A1C21';
+      v['--page'] = c.surface;
+      v['--text'] = ink;
+      v['--muted'] = mix(ink, c.surface, 0.38);
+      v['--card'] = dark ? 'rgba(255,255,255,0.065)' : 'rgba(255,255,255,0.74)';
+      v['--card-hover'] = dark ? 'rgba(255,255,255,0.12)' : '#FFFFFF';
+      v['--card-border'] = dark ? 'rgba(255,255,255,0.11)' : 'rgba(0,0,0,0.08)';
+      v['--field'] = dark ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.86)';
+      v['--shadow'] = dark ? 'none' : '0 1px 2px rgba(20,30,60,0.08)';
+    }
+    // the fill keeps the chosen colour; the text version is pushed until it reads
+    var l = lum(c.accent);
+    var text = c.accent;
+    if (dark && l < 0.22) text = mix(c.accent, '#FFFFFF', 0.45);
+    if (!dark && l > 0.48) text = mix(c.accent, '#000000', 0.42);
+    var on = l > 0.42 ? '#141414' : '#FFFFFF';
+    v['--accent'] = text;
+    v['--accent-fill'] = c.accent;
+    v['--on-accent'] = on;
+    v['--on-accent-muted'] = mix(on, c.accent, 0.34);
+    v['--accent-soft'] = alpha(c.accent, dark ? 0.2 : 0.14);
+    v['--line'] = text;
+    v['--line-2'] = spin(text, 150);
+    v['--ok'] = text;
+    v['--radius'] = c.corner + 'px';
+    v['--radius-sm'] = Math.max(3, Math.round(c.corner * 0.62)) + 'px';
+    v['--font'] = FONTS[c.font] || FONTS.system;
+    return v;
+  }
+
+  function applyTheme() {
+    var s = S.snap;
+    if (!s) return;
+    root.removeAttribute('style');
+    if (s.theme !== 'custom') { root.setAttribute('data-theme', s.theme || 'glass'); return; }
+    var c = S.custom || s.custom;
+    root.setAttribute('data-theme', c.base);
+    var v = customVars(c);
+    for (var k in v) root.style.setProperty(k, v[k]);
+  }
 
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
@@ -376,11 +472,54 @@
   }
 
   function tabLook() {
-    return '<div class="scroll"><section><div class="label">Theme</div><div class="themes">' + THEMES.map(function (t) {
-      return '<button class="theme" data-theme-pick="' + t.id + '" aria-pressed="' + (S.snap.theme === t.id ? 'true' : 'false') + '">' +
+    var c = S.custom || S.snap.custom;
+    var isCustom = S.snap.theme === 'custom';
+    var html = '<div class="scroll"><section><div class="label">Theme</div><div class="themes">' + THEMES.map(function (t) {
+      return '<button class="theme" data-theme-pick="' + t.id + '" aria-pressed="' + (!isCustom && S.snap.theme === t.id ? 'true' : 'false') + '">' +
         '<span class="swatch" style="background:' + t.bg + '"><i style="background:' + t.card + ';width:70%"></i><i style="background:' + t.accent + ';width:45%"></i></span>' +
         '<span><b>' + t.name + '</b><small>' + t.note + '</small></span></button>';
-    }).join('') + '</div></section></div>';
+    }).join('') + '</div></section>' +
+      '<section><div class="label">Your own<span>' + (isCustom ? 'In use' : 'Based on ' + themeName(c.base)) + '</span></div><div class="mixer">' +
+      '<div class="mixrow"><span>Accent</span><div class="colorpick">' +
+      '<input type="color" id="c-accent" value="' + esc(c.accent) + '" aria-label="Accent colour">' +
+      '<input type="text" id="c-accent-hex" spellcheck="false" autocomplete="off" aria-label="Accent colour in hex" value="' + esc(c.accent) + '"></div></div>' +
+      '<div class="dots">' + ACCENTS.map(function (a) {
+        return '<button data-accent="' + a + '" aria-pressed="' + (c.accent.toLowerCase() === a.toLowerCase() ? 'true' : 'false') + '" style="background:' + a + '" aria-label="Accent ' + a + '"></button>';
+      }).join('') + '</div>' +
+      '<div class="mixrow"><span>Background</span><div class="colorpick">' +
+      '<button class="chip" data-surface-off aria-pressed="' + (c.surface ? 'false' : 'true') + '">From ' + themeName(c.base) + '</button>' +
+      '<input type="color" id="c-surface" value="' + esc(c.surface || (DARK_BASES[c.base] ? '#141821' : '#F2F4F8')) + '" aria-label="Background colour">' +
+      '</div></div>' +
+      '<div class="mixrow"><span>Corners</span><input type="range" id="c-corner" min="0" max="26" step="1" value="' + c.corner + '" aria-label="Corner radius"><span class="muted num">' + c.corner + 'px</span></div>' +
+      '<div class="mixrow"><span>Font</span><div class="chiprow">' + S.snap.fonts.map(function (f) {
+        return '<button class="chip" data-font="' + f + '" aria-pressed="' + (c.font === f ? 'true' : 'false') + '">' + (FONT_NAMES[f] || f) + '</button>';
+      }).join('') + '</div></div>' +
+      '<div class="mixrow" style="align-items:flex-start"><span style="padding-top:4px">Start from</span><div class="chiprow">' + S.snap.presets.map(function (p) {
+        return '<button class="chip" data-base="' + p + '" aria-pressed="' + (c.base === p ? 'true' : 'false') + '">' + themeName(p) + '</button>';
+      }).join('') + '</div></div>' +
+      (isCustom ? '' : '<button class="btn primary" data-use-custom>Use this theme</button>') +
+      '</div></section></div>';
+    return html;
+  }
+
+  function themeName(id) {
+    for (var i = 0; i < THEMES.length; i++) if (THEMES[i].id === id) return THEMES[i].name;
+    return id;
+  }
+
+  // Changes to the mixer show at once and are saved a moment later, so dragging
+  // the slider doesn't write the file on every pixel.
+  var saveTimer = null;
+  function editCustom(change) {
+    S.custom = Object.assign({}, S.custom || S.snap.custom, change);
+    S.editing = Date.now();
+    S.snap.theme = 'custom';
+    S.snap.custom = S.custom;
+    render();
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(function () {
+      api('/api/custom', { custom: S.custom }).then(poll).catch(function (err) { S.flash = err.message; render(); });
+    }, 350);
   }
 
   function tabConnection() {
@@ -414,7 +553,7 @@
 
   function render() {
     if (!S.snap) return;
-    root.setAttribute('data-theme', S.snap.theme || 'glass');
+    applyTheme();
     var keepScroll = (root.querySelector('.scroll') || {}).scrollTop || 0;
     root.innerHTML = S.view === 'detail' ? viewDetail() : S.view === 'settings' ? viewSettings() : viewMain();
     var sc = root.querySelector('.scroll');
@@ -437,9 +576,10 @@
     S.snap = snap;
     if (first) S.form.url = snap.url || '';
     if (!changed) return;
+    if (Date.now() - S.editing < 1500) return; // mid-edit in the theme mixer
     if (S.view === 'settings' && S.tab === 'entities' && document.getElementById('chosen')) {
       // keep the search box and the scroll position; only refresh the lists
-      root.setAttribute('data-theme', snap.theme);
+      applyTheme();
       document.getElementById('chosen').innerHTML = chosenList();
       loadPicker();
       return;
@@ -512,9 +652,14 @@
     if (d.move) return void post('/api/move', { id: d.move, delta: Number(d.delta) });
     if (d.domain) { S.picker.domain = d.domain; return drawPicker(); }
     if (d.themePick) {
-      S.snap.theme = d.themePick; render();
+      S.snap.theme = d.themePick; S.custom = null; render();
       return void api('/api/theme', { theme: d.themePick }).then(poll).catch(function () {});
     }
+    if (d.accent) return editCustom({ accent: d.accent });
+    if (d.base) return editCustom({ base: d.base });
+    if (d.font) return editCustom({ font: d.font });
+    if ('surfaceOff' in d) return editCustom({ surface: '' });
+    if ('useCustom' in d) return editCustom({});
     if ('connect' in d) return connect();
     if ('disconnect' in d) {
       return void api('/api/disconnect', {}).then(function () { S.form = { url: '', token: '', busy: false, error: '' }; return poll(); })
@@ -524,6 +669,15 @@
   });
 
   root.addEventListener('input', function (ev) {
+    var id = ev.target.id;
+    if (id === 'c-accent') return editCustom({ accent: ev.target.value.toUpperCase() });
+    if (id === 'c-surface') return editCustom({ surface: ev.target.value.toUpperCase() });
+    if (id === 'c-corner') return editCustom({ corner: Number(ev.target.value) });
+    if (id === 'c-accent-hex') {
+      var v = ev.target.value.trim();
+      if (/^#[0-9a-fA-F]{6}$/.test(v)) { S.editing = Date.now(); editCustom({ accent: v.toUpperCase() }); }
+      return;
+    }
     if (ev.target.id === 'q') { S.picker.q = ev.target.value; drawPicker(); }
     if (ev.target.id === 'f-url') S.form.url = ev.target.value;
     if (ev.target.id === 'f-token') S.form.token = ev.target.value;

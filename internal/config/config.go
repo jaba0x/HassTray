@@ -7,6 +7,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"sync"
 
@@ -21,8 +22,52 @@ const (
 // MaxWidgets is how many entity values fit next to the menu bar icon.
 const MaxWidgets = 5
 
-// Themes the interface knows about. The first one is the default.
-var Themes = []string{"glass", "midnight", "neon", "sunset"}
+// Presets are the themes that ship with HassTray. The first is the default.
+var Presets = []string{"glass", "midnight", "neon", "sunset", "paper", "slate", "forest", "rose"}
+
+// Themes is every value the Theme field accepts: the presets plus "custom",
+// which draws its colours from the Custom field.
+var Themes = append(append([]string{}, Presets...), "custom")
+
+// Fonts the custom theme can use.
+var Fonts = []string{"system", "rounded", "mono", "serif"}
+
+// CustomTheme is a theme the user mixed themselves. Base decides the shape of
+// everything the other fields don't set.
+type CustomTheme struct {
+	Base    string `json:"base"`
+	Accent  string `json:"accent"`
+	Surface string `json:"surface"` // "" keeps the base theme's background
+	Corner  int    `json:"corner"`  // corner radius in px
+	Font    string `json:"font"`
+}
+
+// DefaultCustom is where the theme editor starts.
+func DefaultCustom() CustomTheme {
+	return CustomTheme{Base: "glass", Accent: "#0A84FF", Surface: "", Corner: 16, Font: "system"}
+}
+
+var hexColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
+
+// Check reports what is wrong with a custom theme, if anything.
+func (c CustomTheme) Check() error {
+	if !slices.Contains(Presets, c.Base) {
+		return errors.New("pick a theme to start from")
+	}
+	if !hexColor.MatchString(c.Accent) {
+		return errors.New("the accent colour has to look like #0A84FF")
+	}
+	if c.Surface != "" && !hexColor.MatchString(c.Surface) {
+		return errors.New("the background colour has to look like #0A0E17")
+	}
+	if c.Corner < 0 || c.Corner > 26 {
+		return errors.New("corners go from 0 to 26")
+	}
+	if !slices.Contains(Fonts, c.Font) {
+		return errors.New("unknown font")
+	}
+	return nil
+}
 
 // Config is everything HassTray remembers between launches, apart from the
 // token.
@@ -32,6 +77,8 @@ type Config struct {
 	Graphs   []string `json:"graphs"`
 	Widgets  []string `json:"widgets"`
 	Theme    string   `json:"theme"`
+
+	Custom CustomTheme `json:"custom"`
 }
 
 // Store reads and writes the config file. It is safe to use from several
@@ -59,7 +106,8 @@ func Dir() (string, error) {
 // file yet.
 func Open(dir string) (*Store, error) {
 	s := &Store{path: filepath.Join(dir, "config.json")}
-	s.cfg.Theme = Themes[0]
+	s.cfg.Theme = Presets[0]
+	s.cfg.Custom = DefaultCustom()
 	raw, err := os.ReadFile(s.path)
 	if errors.Is(err, os.ErrNotExist) {
 		return s, nil
@@ -71,7 +119,15 @@ func Open(dir string) (*Store, error) {
 		return nil, err
 	}
 	if !slices.Contains(Themes, s.cfg.Theme) {
-		s.cfg.Theme = Themes[0]
+		s.cfg.Theme = Presets[0]
+	}
+	// a custom theme from a newer version, or one edited by hand, falls back
+	// to the defaults rather than stopping the app from starting
+	if s.cfg.Custom.Check() != nil {
+		s.cfg.Custom = DefaultCustom()
+		if s.cfg.Theme == "custom" {
+			s.cfg.Theme = Presets[0]
+		}
 	}
 	if len(s.cfg.Widgets) > MaxWidgets {
 		s.cfg.Widgets = s.cfg.Widgets[:MaxWidgets]

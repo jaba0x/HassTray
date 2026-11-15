@@ -21,6 +21,7 @@
     rev: 1,
     configured: !params.has('setup'),
     theme: params.get('theme') || 'glass',
+    custom: { base: params.get('base') || 'glass', accent: params.get('accent') ? '#' + params.get('accent') : '#0A84FF', surface: params.get('surface') ? '#' + params.get('surface') : '', corner: Number(params.get('corner') || 16), font: params.get('font') || 'system' },
     widgets: ['sensor.outdoor_temperature', 'sensor.solar_power'],
     graphs: ['sensor.outdoor_temperature', 'sensor.solar_power', 'sensor.home_power'],
     order: ['light.living_room', 'light.kitchen_table', 'cover.pergola_louvers', 'climate.air_conditioner',
@@ -54,7 +55,9 @@
     return {
       rev: db.rev, version: '0.1.0', configured: db.configured, connected: db.configured, error: '',
       url: db.configured ? 'http://homeassistant.local:8123' : '', name: 'Home', haVersion: '2026.11.1',
-      theme: db.theme, themes: ['glass', 'midnight', 'neon', 'sunset'], total: Object.keys(db.all).length,
+      theme: db.theme, themes: ['glass', 'midnight', 'neon', 'sunset', 'paper', 'slate', 'forest', 'rose', 'custom'],
+      presets: ['glass', 'midnight', 'neon', 'sunset', 'paper', 'slate', 'forest', 'rose'],
+      fonts: ['system', 'rounded', 'mono', 'serif'], custom: db.custom, total: Object.keys(db.all).length,
       widgets: db.widgets.length, maxWidgets: 5, entities: db.order.map(view),
       update: { available: params.has('update'), latest: '0.2.0', url: '' }
     };
@@ -95,6 +98,7 @@
         if (i >= 0 && j >= 0 && j < db.order.length) { var x = db.order[i]; db.order[i] = db.order[j]; db.order[j] = x; }
         return { ok: true };
       case '/api/theme': db.theme = body.theme; return { ok: true };
+      case '/api/custom': db.custom = body.custom; db.theme = 'custom'; return { ok: true };
       case '/api/connect':
         if (!body.url) throw new Error('enter the address of your Home Assistant');
         db.configured = true; return { ok: true };

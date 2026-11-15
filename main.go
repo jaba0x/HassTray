@@ -21,7 +21,7 @@ var assets embed.FS
 var trayIcon []byte
 
 // Version is set at build time with -ldflags "-X main.Version=..."
-var Version = "0.1.0"
+var Version = "0.2.0"
 
 func main() {
 	dir, err := config.Dir()

@@ -108,3 +108,37 @@ func TestBadRequestsAndPages(t *testing.T) {
 		t.Fatalf("pages handler not reached: %q", rec.Body.String())
 	}
 }
+
+func TestCustomThemeRoute(t *testing.T) {
+	a, h := testAPI(t)
+	body := `{"custom":{"base":"forest","accent":"#FF5E7E","surface":"#101418","corner":22,"font":"rounded"}}`
+	if code, out := call(t, h, "POST", "/api/custom", body); code != 200 {
+		t.Fatalf("%d %v", code, out)
+	}
+	got := a.store.Get()
+	if got.Theme != "custom" || got.Custom.Base != "forest" || got.Custom.Accent != "#FF5E7E" || got.Custom.Corner != 22 {
+		t.Fatalf("not saved: %+v", got)
+	}
+	_, snap := call(t, h, "GET", "/api/snapshot", "")
+	if snap["theme"] != "custom" {
+		t.Fatalf("snapshot theme: %v", snap["theme"])
+	}
+	if c, ok := snap["custom"].(map[string]any); !ok || c["font"] != "rounded" {
+		t.Fatalf("snapshot custom: %v", snap["custom"])
+	}
+	if len(snap["presets"].([]any)) != 8 {
+		t.Fatalf("presets: %v", snap["presets"])
+	}
+
+	// a theme that doesn't add up is refused and the saved one stays
+	code, out := call(t, h, "POST", "/api/custom", `{"custom":{"base":"forest","accent":"red","corner":4,"font":"mono"}}`)
+	if code != 400 || out["error"] == nil {
+		t.Fatalf("bad accent: %d %v", code, out)
+	}
+	if a.store.Get().Custom.Accent != "#FF5E7E" {
+		t.Fatal("a refused theme should change nothing")
+	}
+	if code, _ := call(t, h, "POST", "/api/custom", `{}`); code != 400 {
+		t.Fatalf("missing theme: %d", code)
+	}
+}

@@ -10,7 +10,7 @@
   <img alt="macOS" src="https://img.shields.io/badge/macOS-universal-1b212b?style=flat-square&logo=apple&logoColor=white">
   <img alt="Go" src="https://img.shields.io/badge/Go-1.26+-1b212b?style=flat-square&logo=go&logoColor=white">
   <img alt="Wails" src="https://img.shields.io/badge/Wails-v3-1b212b?style=flat-square">
-  <img alt="Version" src="https://img.shields.io/badge/version-0.1.0-0a84ff?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/version-0.2.0-0a84ff?style=flat-square">
   <img alt="License" src="https://img.shields.io/badge/license-MIT-1b212b?style=flat-square">
 </p>
 
@@ -39,7 +39,7 @@ Up to five entity values can sit next to the icon in the menu bar itself, for ex
   <img src="docs/themes.png" alt="Midnight Mint, Neon Terminal and Sunset themes" width="900">
 </p>
 
-Four themes, switched from Settings:
+Eight themes ship with the app, switched from Settings:
 
 | Theme | Look |
 |---|---|
@@ -47,8 +47,14 @@ Four themes, switched from Settings:
 | Midnight Mint | Dark ink with a mint accent. |
 | Neon Terminal | Black, lime and monospace. |
 | Sunset | Plum background with warm colours and round corners. |
+| Paper | Flat, light and warm, with squarer corners. |
+| Slate | Cool dark grey with a periwinkle accent. |
+| Forest | Deep green with amber. |
+| Rose | Pale and warm, round, with a deep rose accent. |
 
-A theme is one block of CSS variables in `frontend/dist/style.css`, so adding your own is a short job.
+Under them is a mixer for making your own. Pick a theme to start from, then set the accent colour, the background, how round the corners are and the font (system, rounded, mono or serif). Changes show as you make them. The text colour, the muted colour, the card surfaces and the colour of text on top of the accent are worked out from what you pick, so a light accent on a light background stays readable.
+
+A theme is one block of CSS variables in `frontend/dist/style.css`, so adding another preset is a short job.
 
 ### Where your data goes
 HassTray talks to your Home Assistant and to nothing else, apart from one request a day to GitHub to see if a newer release exists. The access token is stored in the macOS Keychain. Your entity choices and theme are in `~/Library/Application Support/HassTray/config.json`.
@@ -62,7 +68,7 @@ You need Go and the Xcode command line tools (`xcode-select --install`).
 ```
 git clone https://github.com/jaba0x/HassTray.git
 cd HassTray
-scripts/build-mac.sh 0.1.0 --install
+scripts/build-mac.sh 0.2.0 --install
 ```
 
 That runs the tests, builds a universal `HassTray.app` (Apple Silicon and Intel), copies it to `/Applications` and starts it. Leave out `--install` to only build into `build/bin`.
@@ -79,7 +85,7 @@ Right-click the icon for a short menu with Quit.
 
 ## Status
 
-This is version 0.1.0 and it is young. What it doesn't do yet:
+This is version 0.2.0 and it is young. What it doesn't do yet:
 
 - Brightness, colour or temperature controls. A click toggles, and that is all.
 - History beyond what Home Assistant's recorder keeps (10 days by default).
