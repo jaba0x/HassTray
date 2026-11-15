@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HassTray preview</title>
+<link rel="stylesheet" href="../dist/style.css">
+<style>
+  /* A stand-in desktop, so the glass theme has something to blur. */
+  html, body { height: 100%; overflow: auto; }
+  body { display: grid; place-items: start center; padding-top: 40px; background:
+    radial-gradient(700px 500px at 10% 90%, #5ac8fa, transparent 70%),
+    radial-gradient(800px 600px at 90% 5%, #5e5ce6, transparent 70%),
+    radial-gradient(500px 400px at 60% 110%, #ffb454, transparent 70%), #dfe7f2; }
+  body.dark { background:
+    radial-gradient(700px 500px at 10% 90%, #0b5f8a, transparent 70%),
+    radial-gradient(800px 600px at 90% 5%, #3a3890, transparent 70%), #0a0e17; }
+  .frame { width: 400px; height: 640px; border-radius: 22px; overflow: hidden;
+    background: rgba(255, 255, 255, 0.45); backdrop-filter: blur(40px) saturate(180%); -webkit-backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.7); box-shadow: 0 30px 80px rgba(20, 30, 80, 0.35); }
+  body.dark .frame { background: rgba(30, 34, 46, 0.6); border-color: rgba(255, 255, 255, 0.14); }
+  .frame #app { height: 640px; }
+</style>
+</head>
+<body>
+<!-- ?theme=midnight|neon|sunset  ?setup  ?update  ?view=settings&tab=look -->
+<div class="frame"><div id="app" data-theme="glass"></div></div>
+<script>window.HASSTRAY_ASSETS = '../dist/';</script>
+<script src="mock.js"></script>
+<script src="../dist/app.js"></script>
+</body>
+</html>
