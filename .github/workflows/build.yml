@@ -34,4 +34,6 @@ jobs:
         if: github.ref_type == 'tag'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "$GITHUB_REF_NAME" build/bin/*.zip --title "HassTray ${{ steps.ver.outputs.version }}" --generate-notes
+        run: |
+          sed "s/<version>/${{ steps.ver.outputs.version }}/g" RELEASE_NOTES.md > /tmp/notes.md
+          gh release create "$GITHUB_REF_NAME" build/bin/*.zip --title "HassTray ${{ steps.ver.outputs.version }}" --notes-file /tmp/notes.md
